@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NintendoSwitchJoyConAlikeAnim</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #bd5050;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      font-size: 4rem;
+      font-weight: bold;
+      user-select: none;
+      width: max-content;
+      height: 5rem;
+    }
+
+    .word {
+      position: absolute;
+      top: 0;
+      white-space: nowrap;
+      transition: opacity 0.8s ease;
+    }
+
+    .orgin {
+      left: 0;
+      transform: translateX(-150%);
+      opacity: 1;
+    }
+
+    .station {
+      right: 0;
+      transform: translateX(150%);
+      opacity: 1;
+    }
+
+    .move-orgin {
+      animation: moveOrgin 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .move-station {
+      animation: moveStation 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes moveOrgin {
+      to { transform: translateX(0); }
+    }
+
+    @keyframes moveStation {
+      to { transform: translateX(0); }
+    }
+
+    .fade-out {
+      opacity: 0;
+    }
+
+    .os-wrapper {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      font-size: 4rem;
+      font-weight: bold;
+      color: white;
+      display: flex;
+      gap: 0;
+      opacity: 0;
+      user-select: none;
+      transform: translate(-50%, 0);
+    }
+
+    .os-letter {
+      display: inline-block;
+      transition: transform 1.5s ease, opacity 0.6s ease;
+    }
+
+    .os-wrapper.show {
+      opacity: 1;
+    }
+
+    .os-letter.O.move {
+      animation: moveO 1.5s forwards ease;
+    }
+
+    .os-letter.S.move {
+      animation: moveS 1.5s forwards ease;
+    }
+
+    @keyframes moveO {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-20px, -20px); }
+    }
+
+    @keyframes moveS {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(20px, 20px); }
+    }
+
+    .illustration {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 250px;
+      height: 200px;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.2s ease;
+      z-index: -1;
+    }
+
+    .illustration.visible {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="boxd">
+  <div class="container" aria-label="Origin Station Animation">
+    <div class="word orgin">JOY</div>
+    <div class="word station">CON</div>
+
+    <div class="os-wrapper" aria-label="OS letters">
+      <span class="os-letter O">J</span>
+      <span class="os-letter S">C</span>
+    </div>
+
+    <img class="illustration" src="./Nintendo_Switch-removebg-preview.png" alt="Old Mac Illustration" />
+  </div>
+  </div>
+
+  <script>
+    const orgin = document.querySelector('.orgin');
+    const station = document.querySelector('.station');
+    const osWrapper = document.querySelector('.os-wrapper');
+    const osO = osWrapper.querySelector('.os-letter.O');
+    const osS = osWrapper.querySelector('.os-letter.S');
+    const illustration = document.querySelector('.illustration');
+
+    async function animate() {
+      // Step 1: Animate orgin and station inward
+      orgin.classList.add('move-orgin');
+      station.classList.add('move-station');
+
+      // Wait for 1.5 seconds, then fade them out while the animation still runs
+      await new Promise(r => setTimeout(r, 1500));
+      orgin.classList.add('fade-out');
+      station.classList.add('fade-out');
+
+      // Wait for fade to complete (0.8s)
+      await new Promise(r => setTimeout(r, 900));
+      orgin.remove();
+      station.remove();
+
+      // Step 2: Show JC and animate Joy-Con style
+      osWrapper.classList.add('show');
+      osO.classList.add('move');
+      osS.classList.add('move');
+
+      // Wait for diagonal movement
+      await new Promise(r => setTimeout(r, 1600));
+
+      // Step 3: Show the Mac illustration
+      illustration.classList.add('visible');
+
+      // Add Joy-Con hover bounce
+      osO.style.animation = 'hoverUp 2.5s ease-in-out infinite';
+      osS.style.animation = 'hoverUp 2.5s ease-in-out infinite';
+    }
+
+    // Inject hover animation dynamically
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `
+      @keyframes hoverUp {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    animate();
+  </script>
+
+</body>
+</html>
