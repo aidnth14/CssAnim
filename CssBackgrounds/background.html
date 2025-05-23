@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Realistic Colorful Galaxies Background</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; overflow: hidden; height: 100%; background: black;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<canvas id="galaxyCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('galaxyCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const galaxyColors = [
+  ['#fff9a6', '#ffb347', '#ff6f61'],    // warm yellow-orange-red
+  ['#a6eaff', '#4db8ff', '#0066ff'],    // icy blue-cyan
+  ['#ff9ce3', '#ff4d94', '#cc0066'],    // pink-magenta
+  ['#cda6ff', '#7a47ff', '#3f00ff'],    // purple-blue
+  ['#ffd6a6', '#ff9f47', '#cc6600']     // orange-brown
+];
+
+class Star {
+  constructor(x, y, size, brightness) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.brightness = brightness;
+    this.twinkleSpeed = 0.003 + Math.random() * 0.007;
+    this.brightnessDirection = Math.random() < 0.5 ? -1 : 1;
+  }
+  update() {
+    this.brightness += this.brightnessDirection * this.twinkleSpeed;
+    if (this.brightness > 1) {
+      this.brightness = 1;
+      this.brightnessDirection = -1;
+    } else if (this.brightness < 0.6) {
+      this.brightness = 0.6;
+      this.brightnessDirection = 1;
+    }
+  }
+  draw(ctx, baseX, baseY) {
+    ctx.beginPath();
+    ctx.globalAlpha = this.brightness;
+    ctx.fillStyle = 'white';
+    ctx.shadowColor = 'white';
+    ctx.shadowBlur = 1.5;
+    ctx.arc(baseX + this.x, baseY + this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+}
+
+class Galaxy {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.radius = 80 + Math.random() * 80;
+    this.stars = [];
+    this.colorSet = galaxyColors[Math.floor(Math.random() * galaxyColors.length)];
+
+    for (let i = 0; i < 300; i++) {
+      let r = Math.sqrt(Math.random()) * this.radius;
+      let angle = Math.random() * 2 * Math.PI;
+      let starX = r * Math.cos(angle);
+      let starY = r * Math.sin(angle);
+
+      let size = 0.15 + (1 - r / this.radius) * 0.7;
+      let brightness = 0.6 + Math.random() * 0.4;
+
+      this.stars.push(new Star(starX, starY, size, brightness));
+    }
+
+    this.rotation = Math.random() * 2 * Math.PI;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.0005;
+    this.speedX = (Math.random() - 0.5) * 0.01;
+    this.speedY = (Math.random() - 0.5) * 0.01;
+  }
+  update() {
+    this.rotation += this.rotationSpeed;
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    if (this.x < -this.radius) this.x = width + this.radius;
+    if (this.x > width + this.radius) this.x = -this.radius;
+    if (this.y < -this.radius) this.y = height + this.radius;
+    if (this.y > height + this.radius) this.y = -this.radius;
+
+    this.stars.forEach(star => star.update());
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+
+    let grad = ctx.createRadialGradient(0, 0, this.radius * 0.1, 0, 0, this.radius);
+    grad.addColorStop(0, this.colorSet[0] + '99');  // less bright center
+    grad.addColorStop(0.5, this.colorSet[1] + '55');
+    grad.addColorStop(1, this.colorSet[2] + '00');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.stars.forEach(star => star.draw(ctx, 0, 0));
+
+    ctx.restore();
+  }
+}
+
+class ShootingStar {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * width * 0.7;
+    this.y = Math.random() * height * 0.3;
+    this.length = 100 + Math.random() * 100;
+    this.speed = 8 + Math.random() * 12;
+    this.angle = Math.PI / 4;
+    this.opacity = 1;
+    this.trail = [];
+  }
+  update() {
+    this.trail.push({ x: this.x, y: this.y, opacity: this.opacity });
+    if (this.trail.length > 10) this.trail.shift();
+    this.x += this.speed * Math.cos(this.angle);
+    this.y += this.speed * Math.sin(this.angle);
+    this.opacity -= 0.02;
+  }
+  draw(ctx) {
+    ctx.lineCap = 'round';
+    for (let i = 0; i < this.trail.length - 1; i++) {
+      const p1 = this.trail[i];
+      const p2 = this.trail[i + 1];
+      const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+      grad.addColorStop(0, `rgba(255,255,255,${p1.opacity})`);
+      grad.addColorStop(1, `rgba(255,255,255,0)`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+  }
+}
+
+const galaxies = [];
+const shootingStars = [];
+
+for (let i = 0; i < 15; i++) {
+  galaxies.push(new Galaxy());
+}
+
+function maybeAddShootingStar() {
+  if (shootingStars.length < 4) {
+    if (Math.random() < 0.01) {
+      shootingStars.push(new ShootingStar());
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+
+  let bg = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width*0.75);
+  bg.addColorStop(0, '#0b0e30');
+  bg.addColorStop(1, 'black');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  galaxies.forEach(galaxy => {
+    galaxy.update();
+    galaxy.draw(ctx);
+  });
+
+  maybeAddShootingStar();
+  for (let i = shootingStars.length - 1; i >= 0; i--) {
+    const s = shootingStars[i];
+    s.update();
+    s.draw(ctx);
+    if (s.opacity <= 0) shootingStars.splice(i, 1);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
